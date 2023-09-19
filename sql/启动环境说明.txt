@@ -1,0 +1,30 @@
+
+-- 如何启动前端项目iss-edu-platform-online-front
+1. 用VS Code选择文件夹 ： iss-edu-platform-online-front 打开项目
+	D:\学生项目\SW012-在线教育云平台\项目源码\PC后端
+	
+2. 打开终端命令行界面 Terminal -- New Terminal
+
+3. 命令行执行：  npm  i
+
+4. 命令行执行： npm run serve
+
+5. 访问前端项目地址： http://localhost:8081/
+	http://localhost:8081/login
+	
+	
+	
+-- 如何启动后端Springboot项目
+1. Idea导入项目 ：iss-edu-platform-online
+
+2. 在maven project 视图下点击下载按钮下载jar包
+
+3. 在mysql数据中新建数据库edu,  utf8  utf8_general_ci
+
+4. 在edu数据库中初始化数据表脚本
+
+5. 启动redis
+
+6. 根据本地数据库信息修改application.properties中的数据库配置
+
+7. 启动项目

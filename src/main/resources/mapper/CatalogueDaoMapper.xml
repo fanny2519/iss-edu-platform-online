@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iss.edu.dao.CatalogueDao">
+
+    <insert id="insertCatalogue" parameterType="Catalogue" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into catalogue (pid, name, sort, course_id) values (#{pid}, #{name}, #{sort}, #{course.id})
+    </insert>
+
+    <select id="getCatalogues" resultType="Catalogue">
+        select t1.*, t2.hasChildren from catalogue t1 left join
+        (
+            select pid, case when count(t.pid) > 0 then true else false end hasChildren from
+            (
+                select * from catalogue c where c.pid in
+                (
+                    select id from catalogue a where a.pid = #{pid} and a.course_id = #{courseId}
+                )
+            ) t
+            group by t.pid
+        ) t2
+        on t1.id = t2.pid where t1.pid = #{pid} and t1.course_id = #{courseId}
+    </select>
+
+    <delete id="deleteCatalogue">
+        delete from catalogue where course_id = #{courseId} and (id = #{id} or pid = #{id})
+    </delete>
+    
+    <update id="linkMaterials">
+        update catalogue set material_id = #{material.id} where id = #{id}
+    </update>
+</mapper>

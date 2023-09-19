@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iss.edu.dao.UserDao">
+
+    <select id="login" resultType="User">
+        select
+            id, username, nickname, password, phone, email, level, photo, introduction, role
+        from user
+        where (username = #{username} or phone = #{username} or email = #{username}) and password = #{password} and is_active = 1
+    </select>
+
+    <select id="getTeachers" resultType="Map">
+        select id as value, nickname as label from user where role = 2 and is_active = 1
+    </select>
+
+
+    <!--  教师管理  -->
+    <sql id="getPageSQL">
+        select id, username, nickname, password, phone, email, level, photo, introduction, operator, last_update
+        from user
+        <where>
+            <if test="queryValue != null and queryValue != ''">
+                nickname like '%${queryValue}%'   <!--concat('%',#{queryValue},'%')-->
+            </if>
+            and role = 2 and is_active = 1
+        </where>
+    </sql>
+
+
+    <select id="getPage" resultType="User">
+        <include refid="getPageSQL"/>
+        limit #{start}, #{pageSize}
+    </select>
+
+    <select id="getCount" resultType="java.lang.Integer">
+        select count(*) from (
+        <include refid="getPageSQL"/>
+        ) u
+    </select>
+
+
+
+</mapper>

@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iss.edu.dao.ApiDao">
+
+    <resultMap id="userMap" type="User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="nickname" column="nickname"/>
+        <result property="password" column="password"/>
+        <result property="sex" column="sex"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="qqNumber" column="qq_number"/>
+        <result property="level" column="level"/>
+        <result property="photo" column="photo"/>
+        <result property="signature" column="signature"/>
+        <result property="introduction" column="introduction"/>
+    </resultMap>
+
+    <select id="studentLogin" resultType="StudentVO">
+        select
+            id, username, nickname, password, stu_number, sex, phone, email, qq_number, identity_card, photo, signature, introduction
+        from
+            student
+        where
+            (username = #{username} or phone = #{username} or email = #{username}) and password = #{password} and is_active = 1
+    </select>
+
+    <select id="userLogin" resultType="User">
+        select
+            id, username, nickname, password, phone, email, level, photo, introduction
+        from
+            user
+        where
+            (username = #{username} or phone = #{username} or email = #{username}) and password = #{password} and is_active = 1
+    </select>
+
+    <select id="getStudent" resultType="java.util.Map">
+        select
+            id, username, nickname, password, stu_number, sex, phone, email, qq_number, identity_card, photo, signature, introduction
+        from
+            student
+        where
+            id = #{id}
+    </select>
+
+    <select id="getTeacher" resultType="java.util.Map">
+        select
+            id, username, nickname, password, phone, email, level, photo, introduction
+        from
+            user
+        where
+            id = #{id}
+    </select>
+
+    <select id="existStudent" resultType="int">
+        select count(*) as total from student where username = #{username}
+    </select>
+
+    <update id="updatePassword">
+        update student set password = #{password} where username = #{username} or phone = #{username} or email = #{username}
+    </update>
+
+    <insert id="register" parameterType="Student" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into student
+            (username, nickname, password, stu_number, sex, phone, email, qq_number, identity_card, photo, signature, introduction)
+        values
+            (#{username}, #{nickname}, #{password}, #{stuNumber}, #{sex}, #{phone}, #{email}, #{qqNumber}, #{identityCard}, #{photo}, #{signature}, #{introduction})
+    </insert>
+
+    <update id="updateStudent" parameterType="User" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        update student
+        <set>
+            <if test="username != null and username !=''">
+                username = #{username},
+            </if>
+            <if test="nickname != null and nickname !=''">
+                nickname = #{nickname},
+            </if>
+            sex = #{sex},
+            <if test="phone != null and phone !=''">
+                phone = #{phone},
+            </if>
+            <if test="qqNumber != null and qqNumber !=''">
+                qq_number = #{qqNumber},
+            </if>
+            <if test="email != null and email !=''">
+                email = #{email},
+            </if>
+            <if test="signature != null and signature !=''">
+                signature = #{signature},
+            </if>
+            <if test="introduction != null and introduction !=''">
+                introduction = #{introduction},
+            </if>
+            <if test="photo != null and photo !=''">
+                photo = #{photo}
+            </if>
+        </set>
+        <where>
+            id = #{id}
+        </where>
+    </update>
+
+    <select id="getCourseByStudentId" resultType="java.util.Map">
+        select
+            c.id, c.name as courseName, c.cover, u.nickname as author,
+            case when temp.studyNum is null then 0 else temp.studyNum end studyNum
+        from
+            (
+                select l.course_id, t.studyNum from learning l left join
+                    (
+                        select course_id, count(student_id) as studyNum from learning group by course_id
+                    ) t
+                on l.course_id = t.course_id where l.student_id  = #{id}
+            ) temp
+        left join
+            course c on c.id = temp.course_id
+        left join
+            user u on u.id = c.user
+    </select>
+
+    <resultMap id="myClassesMap" type="MyClassesVO">
+        <id property="id" column="id"/>
+        <result property="className" column="className"/>
+        <result property="cover" column="cover"/>
+        <result property="password" column="password"/>
+        <collection property="teachers" ofType="String">
+            <result property="author" column="classMaster"/>
+        </collection>
+    </resultMap>
+
+    <select id="getClassesByStudentId" resultMap="myClassesMap">
+        select
+            c.id, c.name as className, c.cover, u.nickname as classMaster
+        from
+            class c
+        left join
+            user_class uc on c.id = uc.class_id
+        left join
+            user u on u.id = uc.user_id
+        where
+            c.id in (
+              select class_id from student_class where student_id = #{id}
+            )
+    </select>
+
+    <select id="getCourses" resultType="java.util.Map">
+        select
+            c.id, c.name as courseName,c.class_hour as classHour, c.cover, u.nickname as teacher,
+            case when temp.studyNum is null then 0 else temp.studyNum end studyNum,
+            case when cs.score is null then 0 else cs.score end score
+        from
+            course c
+        left join user u on u.id = c.user
+        left join
+            (
+                select course_id, count(student_id) as studyNum from learning group by course_id
+            ) temp on c.id = temp.course_id
+        left join
+            (
+                select  course_id, round(avg(score) ,1) as score from course_score group by course_id
+            ) cs on c.id = cs.course_id
+        where
+              c.is_private = 0 and c.is_active = 1 order by score desc limit #{start}, #{pageSize}
+    </select>
+
+    <select id="getHotCourses" resultType="java.util.Map">
+        select
+            c.id, c.name as courseName,c.class_hour as classHour, c.cover, u.nickname as teacher,
+            case when temp.studyNum is null then 0 else temp.studyNum end studyNum,
+            case when cs.score is null then 0 else cs.score end score
+        from
+            course c
+        left join user u on u.id = c.user
+        left join
+            (
+                select course_id, count(student_id) as studyNum from learning group by course_id
+            ) temp on c.id = temp.course_id
+        left join
+            (
+                select  course_id, round(avg(score) ,1) as score from course_score group by course_id
+            ) cs on c.id = cs.course_id
+        where
+            c.is_private = 0 and c.is_active = 1 limit 0 , 6;
+    </select>
+
+    <select id="countCourse" resultType="int">
+        select count(*) as total from course where is_active = 1 and is_private = 0
+    </select>
+
+    <select id="countClasses" resultType="int">
+        select count(*) as total from class where is_active = 1 and is_private = 0
+    </select>
+
+    <resultMap id="classVOMap" type="ClassVO">
+        <id property="id" column="id"/>
+        <result property="className" column="className"/>
+        <result property="createTime" column="createTime"/>
+        <result property="cover" column="cover"/>
+        <result property="signature" column="signature"/>
+        <result property="isPrivate" column="isPrivate"/>
+        <result property="studentNum" column="studentNum"/>
+        <collection property="teachers" ofType="String">
+            <result property="nickname" column="classMaster"/>
+        </collection>
+    </resultMap>
+
+    <select id="getClasses" resultMap="classVOMap">
+        select
+            c.id, c.className, c.create_time, c.cover, c.is_private,
+            case when c.signature is null then '暂无简介' else c.signature end signature,
+            case when t1.studentNum is null then 0 else t1.studentNum end studentNum,
+            case when t2.nickname is null then '未指定' else t2.nickname end as classMaster
+        from
+            (
+                select id, name as className, create_time, cover, signature, is_private from class where is_active = 1 and is_private = 0 limit  #{start}, #{pageSize}
+            ) c
+        left join
+            (
+                select sc.student_id, sc.class_id as id1, count(sc.class_id) as studentNum from student_class sc group by sc.class_id
+            ) t1 on c.id = t1.id1
+        left join
+            (
+                select uc.class_id as id2, u.nickname from user_class uc left join user u on u.id = uc.user_id
+            ) t2 on c.id = t2.id2
+    </select>
+
+    <select id="getHotClasses" resultMap="classVOMap">
+        select
+            c.id, c.className, c.create_time, c.cover, c.is_private,
+            case when t1.studentNum is null then 0 else t1.studentNum end studentNum,
+            case when t2.nickname is null then '未指定' else t2.nickname end as classMaster
+        from
+            (
+                select id, name as className, create_time, cover, is_private from class where is_active = 1 and is_private = 0
+            ) c
+                left join
+            (
+                select sc.student_id, sc.class_id as id1, count(sc.class_id) as studentNum from student_class sc group by sc.class_id
+            ) t1 on c.id = t1.id1
+                left join
+            (
+                select uc.class_id as id2, u.nickname from user_class uc left join user u on u.id = uc.user_id
+            ) t2 on c.id = t2.id2
+        order by studentNum desc limit 0, 4
+    </select>
+
+    <resultMap id="catalogueMap" type="CatalogueVO">
+        <id property="id" column="id"/>
+        <result property="pid" column="pid"/>
+        <result property="name" column="name"/>
+        <result property="sort" column="sort"/>
+        <result property="hasChildren" column="hasChildren"/>
+        <association property="material" javaType="TeachingMaterial">
+            <id property="id" column="material_id"/>
+            <result property="path" column="path"/>
+        </association>
+    </resultMap>
+
+    <select id="getCourse" resultType="java.util.Map">
+        select
+            c.id, c.name, c.introduction, c.class_hour as classHour, c.cover, u.nickname as teacher, u.phone, u.email
+        from
+            course c left join user u on u.id = c.user
+        where
+            c.id = #{id}
+    </select>
+
+    <select id="getClass" resultType="java.util.Map">
+        select
+            c.id, c.className, c.create_time, c.cover, c.is_private,
+            case when c.signature is null then '暂无简介' else c.signature end signature,
+            case when t1.studentNum is null then 0 else t1.studentNum end studentNum,
+            case when t2.nickname is null then '未指定' else t2.nickname end as classMaster
+        from
+            (
+                select id, name as className, create_time, cover, signature, is_private from class where is_active = 1 and is_private = 0
+            ) c
+                left join
+            (
+                select sc.student_id, sc.class_id as id1, count(sc.class_id) as studentNum from student_class sc group by sc.class_id
+            ) t1 on c.id = t1.id1
+                left join
+            (
+                select uc.class_id as id2, u.nickname from user_class uc left join user u on u.id = uc.user_id
+            ) t2 on c.id = t2.id2
+        where c.id = #{id}
+    </select>
+
+    <select id="getCatalogues" resultMap="catalogueMap">
+        select
+            t1.id, t1.pid, t1.name, t1.sort, t2.hasChildren, m.id as material_id, m.path
+        from
+            catalogue t1
+        left join material m on m.id = t1.material_id
+        left join
+            (
+                select pid, case when count(t.pid) > 0 then true else false end hasChildren from
+                (
+                    select * from catalogue c where c.pid in
+                    (
+                        select id from catalogue a where a.pid = #{pid} and a.course_id = #{courseId}
+                    )
+                ) t
+                group by t.pid
+            ) t2
+            on t1.id = t2.pid
+        where
+            t1.pid = #{pid} and t1.course_id = #{courseId}
+        order by t1.sort
+    </select>
+
+    <insert id="startStudy">
+        insert into learning values (#{studentId}, #{courseId})
+    </insert>
+
+    <resultMap id="planMap" type="ClassPlanVO">
+        <id property="planDate" column="planDate"/>
+        <result property="className" column="name"/>
+        <collection property="plans" ofType="ClassPlan">
+            <id property="id" column="id"/>
+            <result property="classId" column="class_id"/>
+            <result property="context" column="context"/>
+            <result property="lastUpdate" column="last_update"/>
+        </collection>
+    </resultMap>
+
+    <select id="getClassPlans" parameterType="java.lang.Integer" resultMap="planMap">
+        select
+            p1.create_time as planDate,c.name, p2.*
+        from
+            (select date_format(last_update, '%Y/%m/%d') as create_time from class_plan group by create_time) p1
+                left join
+            class_plan p2 on p1.create_time = date_format(p2.last_update, '%Y/%m/%d')
+                left join
+            class c on p2.class_id = c.id
+        where
+            p2.class_id = #{id} order by p1.create_time
+    </select>
+
+    <insert id="insertPlan">
+        insert into class_plan(class_id, context, last_update) values
+        <foreach collection="plans" item="plan" separator=",">
+            (#{id}, #{plan.context}, #{planDate})
+        </foreach>
+    </insert>
+
+    <delete id="deletePlan">
+        delete from class_plan where id in
+        <foreach collection="ids" open="(" separator="," close=")" item="id">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

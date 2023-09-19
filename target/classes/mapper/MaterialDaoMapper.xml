@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iss.edu.dao.MaterialDao">
+
+    <insert id="insertMaterial" parameterType="TeachingMaterial">
+        insert into material (name, course_id, path, create_time, update_time) values (#{name}, #{course.id}, #{path}, now(), now())
+    </insert>
+
+
+    <insert id="insertMaterials" parameterType="TeachingMaterial">
+        insert into material (name, course_id, path, create_time, update_time) values
+        <foreach collection="materials" item="material" separator=",">
+            (#{material.name}, #{courseId}, #{material.path}, now(), now())
+        </foreach>
+    </insert>
+
+    <select id="getMaterialsByCourseId" resultType="Map">
+         select id as value, name as label from material where course_id = #{courseId}
+    </select>
+
+</mapper>
