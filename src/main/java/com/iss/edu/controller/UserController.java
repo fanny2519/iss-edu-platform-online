@@ -1,6 +1,7 @@
 package com.iss.edu.controller;
 
 import com.iss.edu.common.Pagination;
+import com.iss.edu.common.ResultModel;
 import com.iss.edu.dao.UserDao;
 import com.iss.edu.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,11 @@ public class UserController {
         page.setRows(rows);
         page.setTotal(total);
         return page;
+    }
+
+    @GetMapping("/delete/{id}")
+    public ResultModel delete(@PathVariable("id") int id) {
+        return ResultModel.isSuccess(this.userDao.delete(id) > 0);
     }
 
 }

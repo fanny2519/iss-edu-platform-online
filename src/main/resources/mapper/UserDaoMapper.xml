@@ -14,7 +14,7 @@
     </select>
 
 
-    <!--  教师管理  -->
+    <!--  教师列表  -->
     <sql id="getPageSQL">
         select id, username, nickname, password, phone, email, level, photo, introduction, operator, last_update
         from user
@@ -38,6 +38,11 @@
         ) u
     </select>
 
+
+    <!--  删除讲师  -->
+    <update id="delete">
+        update course set is_active = 0 where id = #{id}
+    </update>
 
 
 </mapper>

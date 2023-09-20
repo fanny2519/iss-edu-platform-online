@@ -30,4 +30,7 @@ public interface UserDao {
     List<User> getPage(@Param("start") Integer start, @Param("pageSize") Integer pageSize, @Param("queryValue") String queryValue);
 
     int getCount(String queryValue);
+
+    // 删除讲师信息
+    int delete(int id);
 }
