@@ -33,4 +33,7 @@ public interface UserDao {
 
     // 删除讲师信息
     int delete(int id);
+
+    // 批量删除讲师信息
+    int deletes(int[] ids);
 }

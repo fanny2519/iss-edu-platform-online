@@ -35,9 +35,15 @@ public class UserController {
         return page;
     }
 
+    // 删除讲师信息
     @GetMapping("/delete/{id}")
     public ResultModel delete(@PathVariable("id") int id) {
         return ResultModel.isSuccess(this.userDao.delete(id) > 0);
     }
 
+    //批量删除讲师信息
+    @GetMapping("/deletes")
+    public ResultModel deletes(int[] ids) {
+        return ResultModel.isSuccess(this.userDao.deletes(ids) > 0);
+    }
 }

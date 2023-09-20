@@ -14,7 +14,7 @@
     </select>
 
 
-    <!--  教师管理  -->
+    <!--  教师列表  -->
     <sql id="getPageSQL">
         select id, username, nickname, password, phone, email, level, photo, introduction, operator, last_update
         from user
@@ -38,6 +38,19 @@
         ) u
     </select>
 
+
+    <!--  删除讲师  -->
+    <update id="delete">
+        update user set is_active = 0 where id = #{id}
+    </update>
+
+    <!--  批量删除讲师  -->
+    <delete id="deletes">
+        update user set is_active = 0 where id in
+        <foreach collection="ids" open="(" separator="," close=")" item="id">
+            #{id}
+        </foreach>
+    </delete>
 
 
 </mapper>

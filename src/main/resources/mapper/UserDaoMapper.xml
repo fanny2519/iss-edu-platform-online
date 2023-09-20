@@ -41,8 +41,16 @@
 
     <!--  删除讲师  -->
     <update id="delete">
-        update course set is_active = 0 where id = #{id}
+        update user set is_active = 0 where id = #{id}
     </update>
+
+    <!--  批量删除讲师  -->
+    <delete id="deletes">
+        update user set is_active = 0 where id in
+        <foreach collection="ids" open="(" separator="," close=")" item="id">
+            #{id}
+        </foreach>
+    </delete>
 
 
 </mapper>
