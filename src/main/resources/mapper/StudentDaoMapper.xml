@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iss.edu.dao.StudentDao">
+
+    <resultMap id="studentMap" type="Student">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="nickname" column="nickname"/>
+        <result property="password" column="password"/>
+        <result property="stuNumber" column="stu_number"/>
+        <result property="identityCard" column="identity_card"/>
+        <result property="sex" column="sex"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="qqNumber" column="qq_number"/>
+        <result property="level" column="level"/>
+        <result property="photo" column="photo"/>
+        <result property="signature" column="signature"/>
+        <result property="introduction" column="introduction"/>
+        <result property="lastUpdate" column="last_update"/>
+        <collection property="classes" ofType="Class">
+            <id property="id" column="class_id"/>
+        </collection>
+        <!--  <collection property="courses" ofType="Course">
+              <id property="id" column="course_id"/>
+              <result property="name" column="name"/>
+          </collection>-->
+    </resultMap>
+
+    <sql id="getPageSQL">
+        select
+            id, username, nickname, stu_number, sex, phone, email, qq_number, identity_card, photo, last_update
+        from
+            student
+        <where>
+            <if test="queryValue != null and queryValue != ''">
+                (nickname like '%${queryValue}%' or phone like '%${queryValue}%' or email like '%${queryValue}%')
+            </if>
+            and is_active = 1
+        </where>
+    </sql>
+
+    <select id="getPage" resultType="Student">
+        <include refid="getPageSQL"/>
+        limit #{start}, #{pageSize}
+    </select>
+
+    <select id="getCount" resultType="java.lang.Integer">
+        select count(*)
+        from
+        (
+        <include refid="getPageSQL"/>
+        ) s
+    </select>
+
+    <select id="getStudent" resultMap="studentMap">
+        select
+            s.id, s.username, s.nickname, s.password, s.sex, s.stu_number, s.phone, s.email, s.qq_number,
+            identity_card, s.photo, s.signature, s.introduction, sc.class_id
+        from
+            student s left join student_class sc on id = sc.student_id
+        where
+            s.id = #{id}
+    </select>
+
+    <insert id="insertStudent" parameterType="Student" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into student
+            (username, nickname, password, sex, stu_number, phone, email, qq_number, identity_card, photo, signature, introduction)
+        values
+            (#{username}, #{nickname}, #{password}, #{sex}, #{stuNumber}, #{phone}, #{email}, #{qqNumber}, #{identityCard}, #{photo}, #{signature}, #{introduction})
+    </insert>
+
+    <update id="updateStudent" parameterType="Student">
+        update student
+        <set>
+            <if test="stuNumber != null and stuNumber !=''">
+                stu_number = #{stuNumber},
+            </if>
+            <if test="nickname != null and nickname !=''">
+                nickname = #{nickname},
+            </if>
+            sex = #{sex},
+            <if test="phone != null and phone !=''">
+                phone = #{phone},
+            </if>
+            <if test="qqNumber != null and qqNumber !=''">
+                qq_number = #{qqNumber},
+            </if>
+            <if test="email != null and email !=''">
+                email = #{email},
+            </if>
+            <if test="identityCard != null and identityCard !=''">
+                identity_card = #{identityCard},
+            </if>
+            <if test="photo != null and photo !=''">
+                photo = #{photo},
+            </if>
+        </set>
+        <where>
+            id = #{id}
+        </where>
+    </update>
+
+    <update id="delete">
+        update student set is_active = 0 where id = #{id}
+    </update>
+
+    <delete id="deletes">
+        update student set is_active = 0 where id in
+        <foreach collection="ids" open="(" separator="," close=")" item="id">
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="insertStudentClass">
+        insert into student_class values
+        <foreach collection="classes" item="class" separator=",">
+            (#{id}, #{class.id})
+        </foreach>
+    </insert>
+
+    <delete id="deleteStudentClass">
+        delete from student_class where student_id = #{id}
+    </delete>
+
+    <select id="getClassesById" resultType="java.lang.Integer">
+        select class_id from student_class where student_id = #{id}
+    </select>
+
+    <insert id="importStudents">
+        insert into student
+        (username, nickname, password, sex, stu_number, identity_card, phone, email, qq_number)
+        values
+        <foreach collection="list" item="user" separator=",">
+            (#{user.username}, #{user.nickname}, #{user.password}, #{user.sex}, #{user.stuNumber}, #{user.phone}, #{user.email}, #{user.qqNumber}, 1)
+        </foreach>
+    </insert>
+
+</mapper>

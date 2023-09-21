@@ -3,6 +3,7 @@ package com.iss.edu.controller;
 import com.iss.edu.common.Pagination;
 import com.iss.edu.common.ResultModel;
 import com.iss.edu.dao.UserDao;
+import com.iss.edu.model.Course;
 import com.iss.edu.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,13 @@ public class UserController {
         return page;
     }
 
+    // 新增
+    @PostMapping("/insertUser")
+    public ResultModel insertUser(@RequestBody User user) {
+        return ResultModel.isSuccess(this.userDao.insertUser(user) > 0);
+    }
+
+
     // 删除讲师信息
     @GetMapping("/delete/{id}")
     public ResultModel delete(@PathVariable("id") int id) {
@@ -46,4 +54,23 @@ public class UserController {
     public ResultModel deletes(int[] ids) {
         return ResultModel.isSuccess(this.userDao.deletes(ids) > 0);
     }
+
+    @GetMapping("/getTransfer")
+    public List<Map<String, Object>> getTransfer() {
+        return this.userDao.getTransfer();
+    }
+
+
+    @GetMapping("/getUser/{id}")
+    public User getUser(@PathVariable("id") int id) {
+        return this.userDao.getUser(id);
+    }
+
+
+    // 更新讲师
+    @PostMapping("/updateUser")
+    public ResultModel updateUser(@RequestBody User user) {
+        return ResultModel.isSuccess(this.userDao.updateUser(user) > 0);
+    }
+
 }

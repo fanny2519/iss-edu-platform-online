@@ -36,4 +36,14 @@ public interface UserDao {
 
     // 批量删除讲师信息
     int deletes(int[] ids);
+
+
+    // 新增
+    int insertUser(User user);
+
+    List<Map<String, Object>> getTransfer();
+
+    User getUser(int id);
+
+    int updateUser(User user);
 }

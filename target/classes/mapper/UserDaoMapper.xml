@@ -13,6 +13,11 @@
         select id as value, nickname as label from user where role = 2 and is_active = 1
     </select>
 
+    <select id="getUser" parameterType="java.lang.Integer" resultType="User">
+        select id, username, nickname, password, phone, email, level, photo, introduction
+        from user where id = #{id}
+    </select>
+
 
     <!--  教师列表  -->
     <sql id="getPageSQL">
@@ -38,6 +43,48 @@
         ) u
     </select>
 
+    <!-- 新增讲师 -->
+    <insert id="insertUser" parameterType="User">
+        insert into user
+        (username, nickname, password, phone, email, level, photo, introduction)
+        values
+        (#{username}, #{nickname}, #{password}, #{phone}, #{email}, #{level}, #{photo}, #{introduction})
+    </insert>
+
+
+    <!-- 更新教师 -->
+    <update id="updateUser" parameterType="User">
+        update user
+        <set>
+            <if test="username != null and username !=''">
+                username = #{username},
+            </if>
+            <if test="nickname != null and nickname !=''">
+                nickname = #{nickname},
+            </if>
+            <if test="password != null and password !=''">
+                password = #{password},
+            </if>
+            <if test="phone != null and phone !=''">
+                phone = #{phone},
+            </if>
+            <if test="email != null and email !=''">
+                email = #{email},
+            </if>
+            <if test="photo != null and photo !=''">
+                photo = #{photo},
+            </if>
+            <if test="level != null and level !=''">
+                level = #{level},
+            </if>
+            <if test="introduction != null and introduction !=''">
+                introduction = #{introduction}
+            </if>
+        </set>
+        <where>
+            id = #{id}
+        </where>
+    </update>
 
     <!--  删除讲师  -->
     <update id="delete">
@@ -51,6 +98,10 @@
             #{id}
         </foreach>
     </delete>
+
+    <select id="getTransfer" resultType="java.util.Map">
+        select id as `key`, nickname as label, nickname as query from user where role = 2
+    </select>
 
 
 </mapper>

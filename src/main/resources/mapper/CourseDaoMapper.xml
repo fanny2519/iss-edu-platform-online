@@ -60,7 +60,7 @@
     </insert>
 
     <update id="updateCourse" parameterType="Course">
-        update course set name = #{name}, introduction = #{introduction}, class_hour = #{classHour}, is_private = #{isPrivate}, user = #{teacher.id}, update_time = now() where id = #{id}
+        update course set name = #{name}, introduction = #{introduction}, class_hour = #{classHour}, is_private = #{isPrivate}, user = #{teacher.id}, cover = #{cover}, update_time = now() where id = #{id}
     </update>
 
     <update id="delete">

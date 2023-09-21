@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iss.edu.dao.ClassDao">
+
+    <resultMap id="classMap" type="Class">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="isPrivate" column="is_private"/>
+        <result property="cover" column="cover"/>
+        <result property="signature" column="signature"/>
+        <result property="createTime" column="create_time"/>
+        <result property="studentNum" column="studentNum"/>
+        <collection property="teachers" ofType="User">
+            <id property="id" column="user_id"/>
+            <result property="nickname" column="nickname"/>
+        </collection>
+    </resultMap>
+
+    <select id="getPage" resultMap="classMap">
+        select
+            temp.*, case when t2.nickname is null then '未指定' else t2.nickname end nickname
+        from
+            (
+                select
+                    c.id, c.name, c.create_time, c.cover, c.signature, c.is_private,
+                    case when t1.studentNum is null then 0 else t1.studentNum end studentNum
+                from
+                    class c
+                left join
+                    (
+                        select sc.student_id, sc.class_id as id1, count(sc.class_id) as studentNum from student_class sc group by sc.class_id
+                    ) t1 on c.id = t1.id1
+                <where>
+                    <if test="queryValue != null and queryValue != ''">
+                        c.name like '%${queryValue}%'
+                    </if>
+                    and c.is_active = 1
+                </where>
+                order by t1.studentNum desc
+                limit #{start}, #{pageSize}
+            ) temp
+        left join
+            (
+                select uc.class_id as id2, u.nickname from user_class uc left join user u on u.id = uc.user_id
+            ) t2 on temp.id = t2.id2
+    </select>
+
+    <select id="getClass" parameterType="java.lang.Integer" resultMap="classMap">
+        select
+            c.id, c.name, c.cover, c.signature, c.is_private, c.create_time, uc.user_id ,u.nickname
+        from
+            class c left join user_class uc on c.id = uc.class_id left join user u on u.id = uc.user_id
+        where
+            c.id = #{id}
+    </select>
+
+    <select id="getCount" resultType="java.lang.Integer">
+        select count(*) from class where is_active = 1
+    </select>
+
+    <insert id="insertClass" parameterType="Class" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into class
+            (name, is_private, signature, cover, create_time, update_time)
+        values
+            (#{name}, #{isPrivate}, #{signature}, #{cover}, now(), now())
+    </insert>
+
+    <update id="updateClass" parameterType="Class">
+        update class set name = #{name}, cover = #{cover}, is_private = #{isPrivate}, update_time = now() where id = #{id}
+    </update>
+
+    <update id="delete">
+        update class set is_active = 0 where id = #{id}
+    </update>
+
+    <delete id="deletes">
+        update class set is_active = 0 where id in
+        <foreach collection="ids" open="(" separator="," close=")" item="id">
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="linkCourses">
+        insert into class_course (class_id, course_id) values
+        <foreach collection="courseIds" item="courseId" separator=",">
+            (#{id}, #{courseId})
+        </foreach>
+    </insert>
+
+    <insert id="linkClassMaster">
+        insert into user_class values
+        <foreach collection="teachers" item="teacher" separator=",">
+            (#{teacher.id}, #{id})
+        </foreach>
+    </insert>
+
+    <delete id="deleteUserClass">
+        delete from user_class where class_id = #{id}
+    </delete>
+
+    <delete id="deleteClassCourse">
+        delete from class_course where class_id = #{id}
+    </delete>
+
+    <select id="getTransfer" resultType="java.util.Map">
+        select id as `key`, name as label, name as query from class
+    </select>
+
+    <resultMap id="planMap" type="ClassPlanVO">
+        <id property="planDate" column="planDate"/>
+        <result property="className" column="name"/>
+        <collection property="plans" ofType="ClassPlan">
+            <id property="id" column="id"/>
+            <result property="classId" column="class_id"/>
+            <result property="context" column="context"/>
+            <result property="lastUpdate" column="last_update"/>
+        </collection>
+    </resultMap>
+
+    <select id="getClassPlans" parameterType="java.lang.Integer" resultMap="planMap">
+        select
+            p1.create_time as planDate,c.name, p2.*
+        from
+            (select date_format(last_update, '%Y/%m/%d') as create_time from class_plan group by create_time) p1
+        left join
+            class_plan p2 on p1.create_time = date_format(p2.last_update, '%Y/%m/%d')
+        left join
+            class c on p2.class_id = c.id
+        where
+            p2.class_id = #{id} order by p1.create_time
+    </select>
+
+
+    <insert id="insertPlan">
+        insert into class_plan(class_id, context, last_update) values
+        <foreach collection="plans" item="plan" separator=",">
+            (#{id}, #{plan.context}, #{planDate})
+        </foreach>
+    </insert>
+
+    <delete id="deletePlan">
+        delete from class_plan where id in
+        <foreach collection="ids" open="(" separator="," close=")" item="id">
+            #{id}
+        </foreach>
+    </delete>
+
+
+</mapper>
